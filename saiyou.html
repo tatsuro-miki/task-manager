@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>採用通達書 対応管理ツール</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;
+    --accent:#2d5a8e;--accent2:#e8a020;--text:#1a1a1a;--text2:#666;
+    --success:#2d7a4f;--radius:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+  header{background:var(--accent);color:#fff;padding:16px 32px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  header h1{font-size:18px;font-weight:700;letter-spacing:.05em;}
+  header span{font-size:12px;opacity:.75;font-weight:300;}
+  .container{max-width:1100px;margin:0 auto;padding:24px 20px;}
+  .upload-zone{border:2px dashed var(--border);border-radius:var(--radius);background:var(--surface);padding:48px 24px;text-align:center;cursor:pointer;transition:.2s;position:relative;}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#eef3fa;}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-zone h2{font-size:16px;font-weight:700;margin-bottom:6px;color:var(--accent);}
+  .upload-zone p{font-size:13px;color:var(--text2);}
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+  .tab{padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-badge{display:inline-block;background:var(--accent2);color:#fff;border-radius:10px;font-size:10px;padding:0 6px;margin-left:4px;font-weight:700;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
+  .card-header{background:var(--surface2);padding:10px 16px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .card-body{padding:16px;}
+  .emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .emp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:.15s;}
+  .emp-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--accent);}
+  .emp-card.selected{border-color:var(--accent);background:#eef3fa;}
+  .emp-name{font-size:18px;font-weight:700;margin-bottom:2px;}
+  .emp-yomi{font-size:11px;color:var(--text2);margin-bottom:8px;}
+  .emp-meta{display:flex;flex-wrap:wrap;gap:6px;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;}
+  .badge-blue{background:#ddeeff;color:var(--accent);}
+  .badge-green{background:#ddf0e8;color:var(--success);}
+  .badge-orange{background:#fef0d9;color:#b07010;}
+  .badge-gray{background:var(--surface2);color:var(--text2);}
+  .info-table{width:100%;border-collapse:collapse;}
+  .info-table th,.info-table td{padding:8px 12px;border:1px solid var(--border);font-size:13px;text-align:left;vertical-align:top;}
+  .info-table th{background:var(--surface2);font-weight:600;width:160px;white-space:nowrap;}
+  .mail-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .mail-addr{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:var(--accent);flex:1;word-break:break-all;}
+  .copy-btn{background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:500;white-space:nowrap;}
+  .copy-btn:hover{background:#1d4a7e;}
+  .copy-btn.copied{background:var(--success);}
+  .checklist{list-style:none;}
+  .checklist li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist input[type=checkbox]{width:16px;height:16px;margin-top:2px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;}
+  .check-label{flex:1;cursor:pointer;}
+  .check-label.done{text-decoration:line-through;color:var(--text2);}
+  .check-label strong{display:block;font-weight:600;font-size:13px;}
+  .check-label span{font-size:12px;color:var(--text2);}
+  .check-who{font-size:11px;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+  .who-me{background:#ddeeff;color:var(--accent);}
+  .who-asano{background:#fef0d9;color:#b07010;}
+  .mail-draft{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;}
+  .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:10px;}
+  .progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+  .progress-text{font-size:11px;color:var(--text2);text-align:right;margin-top:2px;}
+  .btn{display:inline-block;padding:8px 20px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:600;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#1d4a7e;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-secondary:hover{background:var(--border);}
+  .btn-green{background:var(--success);color:#fff;}
+  .btn-green:hover{background:#1d5a3f;}
+  .alert{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;}
+  .alert-info{background:#ddeeff;color:var(--accent);border:1px solid #b8d0f0;}
+  .alert-warn{background:#fef0d9;color:#8a6000;border:1px solid #f0d090;}
+  .alert-success{background:#ddf0e8;color:var(--success);border:1px solid #a0d8b8;}
+  .section-toggle{display:none;}
+  .section-toggle.active{display:block;}
+  .loading{text-align:center;padding:40px;color:var(--text2);}
+  .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text2);}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-group label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text2);}
+  .form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--text);}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent);}
+  .csv-preview{background:#1a1a2e;color:#a0d8b3;font-family:'JetBrains Mono',monospace;font-size:11px;padding:16px;border-radius:var(--radius);overflow-x:auto;white-space:pre;max-height:180px;overflow-y:auto;}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}.emp-grid{grid-template-columns:1fr;}header{padding:12px 16px;}.container{padding:16px 12px;}}
+</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/encoding-japanese/2.0.0/encoding.min.js"></script>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📋 採用通達書 対応管理ツール</h1>
+    <span>新入社員・中途社員の入社対応をサポート</span>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <span id="sync-status" style="font-size:11px;opacity:0.8;"></span>
+    <button onclick="saveToGAS()" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:600;">💾 保存</button>
+    <button onclick="loadFromGAS()" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">🔄 読み込み</button>
+  </div>
+</header>
+<div class="container">
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">📄 通達書PDFの読み込み</div>
+    <div class="card-body">
+      <div class="upload-zone" id="dropZone">
+        <input type="file" id="pdfInput" accept=".pdf" multiple>
+        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <h2>PDFをドラッグ＆ドロップ、またはクリックして選択</h2>
+        <p>複数ファイル同時に読み込み可能 ／ 手動入力も下のボタンから可能</p>
+      </div>
+      <div style="margin-top:12px;text-align:center;">
+        <button class="btn btn-secondary" onclick="showManualInput()">✏️ 手動で入力する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="manualInputArea" style="display:none;" class="card">
+    <div class="card-header"><span id="manualInputTitle">✏️ 手動入力</span>
+      <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="hideManualInput()">閉じる</button>
+    </div>
+    <div class="card-body">
+      <div class="form-grid" id="manualForm">
+        <div class="form-group"><label>氏名（漢字）*</label><input type="text" id="m_name" placeholder="例：山田 太郎"></div>
+        <div class="form-group"><label>英語表記 * （姓 名 の順）</label><input type="text" id="m_romaji" placeholder="例：YAMADA TARO"></div>
+        <div class="form-group"><label>よみがな（姓）</label><input type="text" id="m_yomi_sei" placeholder="例：やまだ"></div>
+        <div class="form-group"><label>よみがな（名）</label><input type="text" id="m_yomi_mei" placeholder="例：たろう"></div>
+        <div class="form-group"><label>社員番号</label><input type="text" id="m_empno" placeholder="例：1234"></div>
+        <div class="form-group"><label>勤務先</label><input type="text" id="m_office" placeholder="例：東京本社"></div>
+        <div class="form-group"><label>部課</label><input type="text" id="m_dept" placeholder="例：A1"></div>
+        <div class="form-group"><label>入社区分</label>
+          <select id="m_type"><option value="">⚠️ 未確認</option><option value="新卒">新卒社員</option><option value="中途">中途社員</option><option value="正社員変更">正社員へ変更</option><option value="派遣">派遣</option><option value="業務委託">業務委託</option></select>
+        </div>
+        <div class="form-group"><label>パソコン</label>
+          <select id="m_pc"><option value="">⚠️ 未確認</option><option value="新規">新規</option><option value="既存">既存</option><option value="不要">不必要</option></select>
+        </div>
+        <div class="form-group"><label>携帯電話</label>
+          <select id="m_mobile"><option value="">⚠️ 未確認</option><option value="iPhone">iPhone</option><option value="不要">不必要</option></select>
+        </div>
+        <div class="form-group"><label>メール転送設定</label><input type="text" id="m_forward" placeholder="例：担当者名"></div>
+        <div class="form-group"><label>N-SERVERアクセス権</label><input type="text" id="m_nserver" placeholder="例：〇〇さんと同じ"></div>
+        <div class="form-group"><label>安心君アクセス権</label><input type="text" id="m_anshin" placeholder="例：〇〇さんと同じ"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>グループメールアドレス（カンマ区切り）</label>
+          <input type="text" id="m_groupmail" placeholder="例：group@nosawa.co.jp, info@nosawa.co.jp">
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-primary" id="manualSubmitBtn" onclick="addManualEmployee()">➕ 追加する</button>
+        <button class="btn btn-secondary" onclick="hideManualInput()">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingArea" style="display:none;" class="loading"><span class="spinner"></span>PDFを解析中...</div>
+
+  <div id="mainContent" style="display:none;">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('list')">👥 社員一覧 <span class="tab-badge" id="empCount">0</span></div>
+      <div class="tab" onclick="switchTab('detail')">📋 対応詳細</div>
+      <div class="tab" onclick="switchTab('mail')">✉️ 案内メール</div>
+      <div class="tab" onclick="switchTab('csv')">📥 サイボウズCSV</div>
+      <div class="tab" onclick="switchTab('progress')">✅ 進捗管理</div>
+    </div>
+    <div id="tab-list" class="section-toggle active"><div class="emp-grid" id="empGrid"></div></div>
+    <div id="tab-detail" class="section-toggle"><div id="detailArea"><div class="empty-state"><p>👈 社員一覧から対象者を選択してください</p></div></div></div>
+    <div id="tab-mail" class="section-toggle"><div id="mailArea"><div class="empty-state"><p>👈 社員一覧から対象者を選択してください</p></div></div></div>
+    <div id="tab-csv" class="section-toggle"><div id="csvArea"></div></div>
+    <div id="tab-progress" class="section-toggle"><div id="progressArea"></div></div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let employees=[],checks={},selectedEmpId=null;
+
+// ===== GAS連携設定 =====
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGuE3s1jfyOwy7ZRIO_JlrTYAHXcHarv4p0tFVXoALRnYd2J7hFocdW21POWyo0F_y0A/exec';
+
+function setSyncStatus(msg, color='#fff') {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+// GASに保存
+async function saveToGAS() {
+  if (!employees.length) { alert('保存するデータがありません'); return; }
+  setSyncStatus('保存中...', '#ffd');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveAll', employees, checks })
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      setSyncStatus('✅ 保存済み ' + new Date().toLocaleTimeString('ja-JP'), '#afffaf');
+      setTimeout(() => setSyncStatus(''), 4000);
+    } else {
+      setSyncStatus('❌ 保存失敗', '#ffaaaa');
+      alert('保存失敗: ' + data.message);
+    }
+  } catch(e) {
+    setSyncStatus('❌ 通信エラー', '#ffaaaa');
+    alert('通信エラー: ' + e.message);
+  }
+}
+
+// GASから読み込み
+async function loadFromGAS() {
+  setSyncStatus('読み込み中...', '#ffd');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'loadAll' })
+    });
+    const data = await res.json();
+    if (data.status === 'ok' && data.employees && data.employees.length > 0) {
+      employees = data.employees;
+      checks = data.checks || {};
+      selectedEmpId = employees[0]?.id || null;
+      renderAll();
+      if (selectedEmpId) { renderDetail(selectedEmpId); renderMailDraft(selectedEmpId); }
+      setSyncStatus('✅ 読み込み完了 ' + employees.length + '名', '#afffaf');
+      setTimeout(() => setSyncStatus(''), 4000);
+    } else if (data.status === 'ok') {
+      setSyncStatus('（データなし）', '#ccc');
+      alert('スプレッドシートにデータがありません');
+    } else {
+      setSyncStatus('❌ 読み込み失敗', '#ffaaaa');
+      alert('読み込み失敗: ' + data.message);
+    }
+  } catch(e) {
+    setSyncStatus('❌ 通信エラー', '#ffaaaa');
+    alert('通信エラー: ' + e.message);
+  }
+}
+
+// ローカル保存（バックアップ用）
+const STORAGE_KEY = 'saiyou_tool_data';
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ employees, checks, selectedEmpId, savedAt: new Date().toLocaleString('ja-JP') }));
+  } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (data.employees && data.employees.length > 0) {
+      employees = data.employees;
+      checks = data.checks || {};
+      selectedEmpId = data.selectedEmpId || employees[0]?.id || null;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function clearStorage() {
+  if (!confirm('ローカルデータを削除しますか？\n（スプレッドシートのデータは残ります）')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  employees = []; checks = {}; selectedEmpId = null;
+  renderAll();
+}
+
+
+
+// 命名規則：名の頭文字 + . + 姓ローマ字  例: SHINYA SAYUKI → s.shinya@nosawa.co.jp
+function generateEmail(romaji){
+  if(!romaji)return'';
+  const p=romaji.trim().toUpperCase().split(/\s+/);
+  if(p.length<2)return'';
+  return p[1][0].toLowerCase()+'.'+p[0].toLowerCase()+'@nosawa.co.jp';
+}
+
+function getTasks(emp){
+  const t=[];
+  t.push({key:'asano_notify',label:'浅野さんへ案内メール送信',detail:'メールアドレス作成依頼・MS365対応依頼を送付',who:'me'});
+  t.push({key:'cybozu_reg',label:'サイボウズ登録',detail:'CSVタブからCSVを出力してインポート',who:'me'});
+  t.push({key:'ismart_reg',label:'iSmart利用者登録',detail:'iSmartに利用者として追加',who:'me'});
+  t.push({key:'app_setup',label:'初期設定・アプリ案内',detail:'Teams / 安否確認 / iSmart / KingOfTime / 楽楽精算 / サイボウズ',who:'me'});
+  if(emp.mobile&&emp.mobile!=='不要')t.push({key:'mobile_order',label:`携帯電話の手配（${emp.mobile}）`,detail:'発注 or 既存番号変更',who:'me'});
+  if(emp.relo)t.push({key:'relo_reg',label:'リロクラブ登録',detail:'リロクラブに社員登録',who:'me'});
+  t.push({key:'mail_create',label:'メールアドレス作成（浅野さん）',detail:`個人用：${emp.email||'要確認'}`,who:'asano'});
+  t.push({key:'ms365',label:'MS365アカウント登録（浅野さん）',detail:'MS365ライセンス付与',who:'asano'});
+  if(emp.nserver)t.push({key:'nserver',label:'N-SERVERアクセス権付与（浅野さん）',detail:emp.nserver,who:'asano'});
+  if(emp.pc&&emp.pc!=='不要')t.push({key:'pc_kit',label:`PCキッティング（浅野さん）【${emp.pc}】`,detail:'PCセットアップ',who:'asano'});
+  return t;
+}
+
+// ===== PDF解析：座標ベース方式 =====
+// ラベル（x<180）と値（x>=180）を座標で分離し、同一Y行ごとにマッピング
+
+async function readPDFSpans(file){
+  // PDF.jsで全spanを座標付きで取得
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const spans = [];
+  for(let i=1; i<=pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    for(const item of content.items){
+      const t = item.str.trim();
+      if(t) spans.push({t, x: item.transform[4], y: item.transform[5]});
+    }
+  }
+  return spans;
+}
+
+function buildRowMap(spans){
+  // Y座標（±5px）でグループ化してラベル→値マップを作る
+  // PDF.jsのyは下から上なので降順ソート→上から順に処理
+  spans.sort((a,b) => b.y - a.y || a.x - b.x);
+  const rows = [];
+  let cur = null;
+  for(const s of spans){
+    if(!cur || Math.abs(s.y - cur.y) > 5){
+      cur = {y: s.y, labels:[], values:[]};
+      rows.push(cur);
+    } else {
+      cur.y = (cur.y + s.y) / 2; // 平均Y
+    }
+    // x<180をラベル列、x>=180を値列とする
+    if(s.x < 180) cur.labels.push(s.t);
+    else           cur.values.push(s.t);
+  }
+
+  // ラベル→値 マップを構築（ラベルを結合してキーに）
+  const map = {}; // 'ふりがな' -> ['やまだ','たろう']
+  for(const row of rows){
+    if(!row.labels.length) continue;
+    // 数字だけのラベル（※2の「2」など）は除外してラベル結合
+    const key = row.labels
+      .filter(l => !/^\d+$/.test(l) && l !== '■')
+      .join('')
+      .replace(/[※＊\*\s\d]+$/,'')  // 末尾の※2などを除去
+      .trim();
+    if(key) map[key] = row.values;
+  }
+  return map;
+}
+
+function getVal(map, labelPattern, idx=0){
+  // labelPatternに前方一致するキーを検索
+  const key = Object.keys(map).find(k => k.startsWith(labelPattern));
+  if(!key) return '';
+  const vals = map[key] || [];
+  // ドロップダウンの説明文（「/」区切りのもの）を除外
+  const clean = vals.filter(v => !v.includes('/中途') && !v.includes('※例'));
+  return (clean[idx] || '').trim();
+}
+
+async function parsePDF(file){
+  const spans = await readPDFSpans(file);
+  const map = buildRowMap(spans);
+
+  const emp = {
+    id: String(Date.now())+'_'+String(Math.floor(Math.random()*10000)),
+    name:'', yomi:'', yomiSei:'', yomiMei:'',
+    romaji:'', empNo:'', office:'', dept:'',
+    type:'', pc:'', mobile:'',
+    forward:'', nserver:'', anshin:'',
+    groupMails:[], relo:false, email:'',
+    joinDate:'', role:'', jobType:'', depts:[], rates:[]
+  };
+
+  // ふりがな（姓=idx0, 名=idx1）
+  emp.yomiSei = getVal(map,'ふりがな', 0);
+  emp.yomiMei = getVal(map,'ふりがな', 1);
+  emp.yomi    = [emp.yomiSei, emp.yomiMei].filter(Boolean).join('　');
+
+  // 氏名（姓=idx0, 名=idx1）
+  const sei = getVal(map,'氏名', 0);
+  const mei = getVal(map,'氏名', 1);
+  emp.name = [sei, mei].filter(Boolean).join('　');
+
+  // 英語表記
+  emp.romaji = getVal(map,'英語表記', 0).toUpperCase();
+  // 「YAMADA TARO」が2トークンに分かれている場合は結合
+  if(!emp.romaji.includes(' ')){
+    const vals = (map[Object.keys(map).find(k=>k.startsWith('英語表記'))]||[])
+      .filter(v=>/^[A-Za-z]+$/.test(v));
+    if(vals.length>=2) emp.romaji = vals.join(' ').toUpperCase();
+  }
+
+  // 社員番号
+  emp.empNo = getVal(map,'社員番号', 0);
+
+  // 入社予定日（YYYY-MM-DD または 令和X年Y月Z日）
+  const jdRaw = getVal(map,'入社予定日', 0).replace(/\s/g,'');
+  const mISO = jdRaw.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  const mJP  = jdRaw.match(/令和(\d+)年(\d+)月(\d+)日/);
+  if(mISO){
+    const reiwa = parseInt(mISO[1]) - 2018;
+    emp.joinDate = `令和${reiwa}年${parseInt(mISO[2])}月${parseInt(mISO[3])}日`;
+  } else if(mJP){
+    emp.joinDate = `令和${mJP[1]}年${mJP[2]}月${mJP[3]}日`;
+  }
+
+  // 入社区分（ドロップダウン値の1つ目＝選択値）
+  const typeRaw = getVal(map,'入社区分', 0);
+  const typeMap = {'新卒社員':'新卒','中途社員':'中途','正社員へ変更':'正社員変更','派遣':'派遣','業務委託':'業務委託'};
+  emp.type = typeMap[typeRaw] || typeRaw || '';
+
+  // 勤務先・役職・職種
+  emp.office  = getVal(map,'勤務先', 0);
+  emp.role    = getVal(map,'役職',   0);
+  emp.jobType = getVal(map,'職種',   0);
+
+  // 部課：/^[A-Z]\d$/ 形式のspanのうち一番左（x座標最小）の1つだけ
+  const deptSpans = spans.filter(s => /^[A-Z]\d$/.test(s.t));
+  deptSpans.sort((a,b) => a.x - b.x);
+  emp.depts = deptSpans.length ? [deptSpans[0].t] : [];
+
+  // 分担率：部課スパンのy座標（±10px）に隣接する数値スパンを取得
+  if(deptSpans.length > 0){
+    const deptY = deptSpans[0].y;
+    const rateSpans = spans.filter(s =>
+      /^\d{1,3}$/.test(s.t) &&
+      Math.abs(s.y - deptY) > 5 && Math.abs(s.y - deptY) < 35 &&
+      parseInt(s.t) < 100
+    );
+    emp.rates = rateSpans.map(s=>s.t);
+  }
+  emp.dept = emp.depts[0] || '';
+
+  // 携帯電話・パソコン
+  const mobileRaw = getVal(map,'携帯電話', 0);
+  emp.mobile = (mobileRaw==='不必要'||mobileRaw==='不要') ? '不要' : mobileRaw;
+  const pcRaw = getVal(map,'パソコン', 0);
+  emp.pc = (pcRaw==='不必要'||pcRaw==='不要') ? '不要' : pcRaw;
+
+  // リロクラブ
+  emp.relo = getVal(map,'リロクラブ',0) === '必要';
+
+  // メールアドレス（@を含む値を全収集）
+  const allVals = Object.values(map).flat();
+  emp.groupMails = [...new Set(allVals.filter(v=>v.includes('@nosawa.co.jp')))];
+
+  // メール転送・N-SERVER・安心君
+  emp.forward = getVal(map,'メール転送設定', 0).replace(/^不必要$/,'');
+  emp.nserver = getVal(map,'N-SERVERアクセス権', 0).replace(/^不必要$/,'');
+  emp.anshin  = getVal(map,'安心君アクセス権',   0).replace(/^不必要$/,'');
+
+  emp.email = generateEmail(emp.romaji);
+  return emp;
+}
+
+// 旧関数名との互換（processFilesから呼ぶため）
+async function readPDF(file){ return file; } // ダミー（直接parsePDFを使う）
+
+document.getElementById('pdfInput').addEventListener('change',async e=>await processFiles(e.target.files));
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',async e=>{e.preventDefault();dz.classList.remove('dragover');await processFiles(e.dataTransfer.files);});
+
+async function processFiles(files){
+  if(!files.length)return;
+  document.getElementById('loadingArea').style.display='block';
+  document.getElementById('mainContent').style.display='none';
+  for(const f of files){
+    if(!f.name.toLowerCase().endsWith('.pdf'))continue;
+    try{
+      const emp=await parsePDF(f);
+      emp.fileName=f.name;
+      if(emp.empNo&&employees.find(e=>e.empNo===emp.empNo))continue;
+      employees.push(emp);checks[emp.id]={};
+    }catch(e){console.error(e);alert('読み込みエラー: '+f.name+'\n'+e.message);}
+  }
+  document.getElementById('loadingArea').style.display='none';
+  renderAll();
+  saveToStorage();
+}
+
+let editingEmpId=null; // 編集中の社員ID（nullなら新規追加）
+
+function showManualInput(empId){
+  editingEmpId=empId||null;
+  const title=document.getElementById('manualInputTitle');
+  if(empId){
+    // 編集モード：既存データをフォームに流し込む
+    const emp=employees.find(e=>e.id===empId);
+    if(!emp)return;
+    title.textContent='✏️ 社員情報を編集';
+    document.getElementById('m_name').value=emp.name||'';
+    document.getElementById('m_romaji').value=emp.romaji||'';
+    document.getElementById('m_yomi_sei').value=emp.yomiSei||'';
+    document.getElementById('m_yomi_mei').value=emp.yomiMei||'';
+    document.getElementById('m_empno').value=emp.empNo||'';
+    document.getElementById('m_office').value=emp.office||'';
+    document.getElementById('m_dept').value=emp.dept||'';
+    document.getElementById('m_type').value=emp.type||'新卒';
+    document.getElementById('m_pc').value=emp.pc||'新規';
+    document.getElementById('m_mobile').value=emp.mobile||'iPhone';
+    document.getElementById('m_forward').value=emp.forward||'';
+    document.getElementById('m_nserver').value=emp.nserver||'';
+    document.getElementById('m_anshin').value=emp.anshin||'';
+    document.getElementById('m_groupmail').value=(emp.groupMails||[]).join(', ');
+    document.getElementById('manualSubmitBtn').textContent='💾 更新する';
+  } else {
+    // 新規追加モード：フォームを完全クリア
+    title.textContent='✏️ 手動入力（新規追加）';
+    document.getElementById('m_name').value='';
+    document.getElementById('m_romaji').value='';
+    document.getElementById('m_yomi_sei').value='';
+    document.getElementById('m_yomi_mei').value='';
+    document.getElementById('m_empno').value='';
+    document.getElementById('m_office').value='';
+    document.getElementById('m_dept').value='';
+    document.getElementById('m_type').selectedIndex=0;
+    document.getElementById('m_pc').selectedIndex=0;
+    document.getElementById('m_mobile').selectedIndex=0;
+    document.getElementById('m_forward').value='';
+    document.getElementById('m_nserver').value='';
+    document.getElementById('m_anshin').value='';
+    document.getElementById('m_groupmail').value='';
+    document.getElementById('manualSubmitBtn').textContent='➕ 追加する';
+  }
+  document.getElementById('manualInputArea').style.display='block';
+}
+function hideManualInput(){document.getElementById('manualInputArea').style.display='none';editingEmpId=null;}
+
+function addManualEmployee(){
+  const name=document.getElementById('m_name').value.trim();
+  const romaji=document.getElementById('m_romaji').value.trim();
+  if(!name){alert('氏名を入力してください');return;}
+  const ys=document.getElementById('m_yomi_sei').value.trim();
+  const ym=document.getElementById('m_yomi_mei').value.trim();
+  const data={
+    name,yomi:[ys,ym].filter(Boolean).join('　'),
+    yomiSei:ys,yomiMei:ym,romaji:romaji.toUpperCase(),
+    empNo:document.getElementById('m_empno').value.trim(),
+    office:document.getElementById('m_office').value.trim(),
+    dept:document.getElementById('m_dept').value.trim(),
+    type:document.getElementById('m_type').value,
+    pc:document.getElementById('m_pc').value,
+    mobile:document.getElementById('m_mobile').value,
+    forward:document.getElementById('m_forward').value.trim(),
+    nserver:document.getElementById('m_nserver').value.trim(),
+    anshin:document.getElementById('m_anshin').value.trim(),
+    groupMails:document.getElementById('m_groupmail').value.split(/[,、]/).map(s=>s.trim()).filter(Boolean),
+    relo:true,email:generateEmail(romaji)
+  };
+  if(editingEmpId){
+    // 編集モード：既存データを上書き
+    const idx=employees.findIndex(e=>e.id===editingEmpId);
+    if(idx>=0){employees[idx]={...employees[idx],...data};}
+  } else {
+    // 新規追加モード
+    const emp={id:String(Date.now())+'_'+String(Math.floor(Math.random()*10000)),...data,fileName:'手動入力'};
+    employees.push(emp);checks[emp.id]={};
+  }
+  const wasEditing=editingEmpId;
+  hideManualInput();renderAll();
+  saveToStorage();
+  // 編集した社員が選択中なら詳細・メールも再描画
+  if(wasEditing){
+    selectedEmpId=wasEditing;
+    renderDetail(wasEditing);
+    renderMailDraft(wasEditing);
+  }
+}
+
+function deleteEmployee(empId){
+  if(!confirm('この社員を削除しますか？'))return;
+  employees=employees.filter(e=>e.id!==empId);
+  delete checks[empId];
+  if(selectedEmpId===empId)selectedEmpId=employees.length?employees[0].id:null;
+  renderAll();
+  saveToStorage();
+  if(selectedEmpId){renderDetail(selectedEmpId);renderMailDraft(selectedEmpId);}
+}
+
+function renderAll(){
+  if(!employees.length){document.getElementById('mainContent').style.display='none';return;}
+  document.getElementById('mainContent').style.display='block';
+  document.getElementById('empCount').textContent=employees.length;
+  renderEmpGrid();renderProgress();renderCsvTab();
+}
+
+function renderEmpGrid(){
+  const g=document.getElementById('empGrid');g.innerHTML='';
+  employees.forEach(emp=>{
+    const tasks=getTasks(emp);
+    const done=tasks.filter(t=>checks[emp.id]?.[t.key]).length;
+    const pct=Math.round(done/tasks.length*100);
+    const d=document.createElement('div');
+    d.className='emp-card'+(selectedEmpId===emp.id?' selected':'');
+    d.innerHTML=`
+      <div class="emp-name">${emp.name||'（氏名不明）'}</div>
+      <div class="emp-yomi">${emp.yomi||''} ${emp.romaji?'/ '+emp.romaji:''}</div>
+      <div class="emp-meta">
+        ${emp.empNo?`<span class="badge badge-gray">No.${emp.empNo}</span>`:''}
+        ${emp.office?`<span class="badge badge-blue">${emp.office}</span>`:''}
+        ${emp.dept?`<span class="badge badge-green">${emp.dept}</span>`:''}
+        <span class="badge ${emp.type?'badge-orange':'badge-warn'}">${emp.type||'⚠️ 要確認'}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+        <div class="progress-text">${done}/${tasks.length} 完了 (${pct}%)</div>
+        <button class="btn btn-secondary" style="font-size:11px;padding:2px 10px;" onclick="event.stopPropagation();showManualInput('${emp.id}')">✏️ 編集</button>
+          <button class="btn btn-secondary btn-danger" style="font-size:11px;padding:2px 10px;" onclick="event.stopPropagation();deleteEmployee('${emp.id}')">🗑️ 削除</button>
+      </div>`;
+    d.onclick=()=>selectEmployee(emp.id);
+    g.appendChild(d);
+  });
+}
+
+function selectEmployee(id){
+  selectedEmpId=id;renderEmpGrid();renderDetail(id);renderMailDraft(id);switchTab('detail');
+  saveToStorage();
+}
+
+function renderDetail(id){
+  const emp=employees.find(e=>e.id===id);if(!emp)return;
+  const tasks=getTasks(emp);
+  const emailHtml=emp.email
+    ?`<div class="mail-box"><div class="mail-addr">${emp.email}</div><button class="copy-btn" onclick="copyText('${emp.email}',this)">コピー</button></div>
+       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">命名規則：名の頭文字 + . + 姓ローマ字　← ${emp.romaji||''}</div>`
+    :`<div class="alert alert-warn">⚠️ ローマ字情報がないため自動生成できませんでした。</div>`;
+
+  const groupHtml=emp.groupMails?.length
+    ?`<div style="margin-top:8px;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">追加するグループメールアドレス</div>
+      ${emp.groupMails.map(m=>`<div class="mail-box"><div class="mail-addr">${m}</div><button class="copy-btn" onclick="copyText('${m}',this)">コピー</button></div>`).join('')}`:'';
+
+  const taskRows=tasks.map(t=>{
+    const chk=checks[id]?.[t.key]?'checked':'';
+    const dc=checks[id]?.[t.key]?' done':'';
+    const wc=t.who==='me'?'who-me':'who-asano';
+    const wl=t.who==='me'?'自分':'浅野さん';
+    return`<li><input type="checkbox" ${chk} onchange="toggleCheck('${id}','${t.key}',this)">
+      <label class="check-label${dc}" onclick="this.previousElementSibling.click()">
+        <strong>${t.label}</strong><span>${t.detail}</span>
+      </label><span class="check-who ${wc}">${wl}</span></li>`;
+  }).join('');
+
+  document.getElementById('detailArea').innerHTML=`
+    <div class="card"><div class="card-header">👤 基本情報
+      <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="showManualInput('${emp.id}')">✏️ 情報を編集</button>
+            <button class="btn btn-secondary btn-danger" style="font-size:11px;padding:4px 10px;" onclick="deleteEmployee('${emp.id}')">🗑️ 削除</button>
+    </div><div class="card-body">
+      <table class="info-table">
+        <tr><th>氏名</th><td>${emp.name}${emp.yomi?`（${emp.yomi}）`:''}</td></tr>
+        <tr><th>英語表記</th><td>${emp.romaji||'—'}</td></tr>
+        <tr><th>社員番号</th><td>${emp.empNo||'—'}</td></tr>
+        <tr><th>勤務先 / 部課</th><td>${emp.office||'—'} / ${emp.dept||'—'}</td></tr>
+        <tr><th>入社区分</th><td>${emp.type||'<span style="color:#e67e22;font-weight:bold;">⚠️ 未確認（編集ボタンで設定）</span>'}</td></tr>
+        <tr><th>パソコン</th><td>${emp.pc||'<span style="color:#e67e22;font-weight:bold;">⚠️ 未確認</span>'}</td></tr>
+        <tr><th>携帯電話</th><td>${emp.mobile||'<span style="color:#e67e22;font-weight:bold;">⚠️ 未確認</span>'}</td></tr>
+        <tr><th>メール転送</th><td>${emp.forward||'—'}</td></tr>
+        <tr><th>N-SERVERアクセス権</th><td>${emp.nserver||'—'}</td></tr>
+        <tr><th>安心君アクセス権</th><td>${emp.anshin||'—'}</td></tr>
+      </table>
+    </div></div>
+    <div class="card"><div class="card-header">✉️ メールアドレス（浅野さんへ作成依頼）</div>
+      <div class="card-body">${emailHtml}${groupHtml}</div></div>
+    <div class="card">
+      <div class="card-header">✅ 対応チェックリスト
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="resetChecks('${emp.id}')">リセット</button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info" style="margin-bottom:12px;">🔵 自分 ／ 🟡 浅野さん</div>
+        <ul class="checklist">${taskRows}</ul>
+      </div>
+    </div>`;
+}
+
+function toggleCheck(empId,key,el){
+  if(!checks[empId])checks[empId]={};
+  checks[empId][key]=el.checked;
+  renderDetail(empId);renderProgress();renderEmpGrid();
+  saveToStorage();
+}
+function resetChecks(empId){checks[empId]={};renderDetail(empId);renderProgress();renderEmpGrid();}
+
+function renderMailDraft(id){
+  const emp=employees.find(e=>e.id===id);if(!emp)return;
+  const today=new Date();
+  const ds=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  const gmStr=emp.groupMails?.length?'\n\n【グループメールアドレスへの追加】\n'+emp.groupMails.map(a=>`  ・${a}`).join('\n'):'';
+  const fw=emp.forward?`\n・メール転送設定：${emp.forward}`:'';
+  const ns=emp.nserver?`\n・N-SERVERアクセス権：${emp.nserver}`:'';
+  const an=emp.anshin?`\n・安心君アクセス権：${emp.anshin}`:'';
+  const pc=emp.pc&&emp.pc!=='不要'?`\n・PCキッティング（${emp.pc}）`:'';
+
+  const subject=`件名：${emp.joinDate||'令和8年4月1日'}入社　${emp.name}　新規設定のお願い`;
+
+  const draft=`${subject}
+
+━━━━━━━━━━━━━━━━━━━━
+
+浅野さん
+
+お世話になっております。
+${ds}付けで下記の通り入社者がおりますので、MS365関連の対応をお願いいたします。
+
+━━━━━━━━━━━━━━━━━━━━
+■ 入社者情報
+━━━━━━━━━━━━━━━━━━━━
+氏名　　　：${emp.name}（${emp.yomi||emp.romaji||'—'}）
+英語表記　：${emp.romaji||'—'}
+社員番号　：${emp.empNo||'—'}
+勤務先　　：${emp.office||'—'} / ${emp.dept||'—'}
+入社区分　：${emp.type}
+
+━━━━━━━━━━━━━━━━━━━━
+■ メールアドレス作成依頼
+━━━━━━━━━━━━━━━━━━━━
+個人用メールアドレス：${emp.email||'※要確認'}${gmStr}
+
+━━━━━━━━━━━━━━━━━━━━
+■ その他対応依頼事項
+━━━━━━━━━━━━━━━━━━━━
+・MS365アカウント登録${pc}${fw}${ns}${an}
+
+━━━━━━━━━━━━━━━━━━━━
+入社予定日：令和8年4月1日
+
+ご確認のほどよろしくお願いいたします。`;
+
+  document.getElementById('mailArea').innerHTML=`
+    <div class="card">
+      <div class="card-header">✉️ 浅野さんへの案内メール（${emp.name}）
+        <button class="copy-btn" onclick="copyText(document.getElementById('dft_${id}').innerText,this)">全文コピー</button>
+      </div>
+      <div class="card-body"><div class="mail-draft" id="dft_${id}">${draft}</div></div>
+    </div>`;
+}
+
+// ---- サイボウズCSV ----
+// 列順：ログイン名,表示名,新ログイン名,パスワード,姓,名,よみがな（姓）,よみがな（名）,
+//       別言語での表示名,別言語の名前を表示する言語,メールアドレス,使用状態,言語,タイムゾーン,
+//       電話番号,内線,携帯電話,URL,従業員ID,入社日,誕生日,コメント,表示優先度,Skype名,削除
+function buildCsvRows(){
+  const hdr=['ログイン名','表示名','新ログイン名','パスワード','姓','名',
+    'よみがな（姓）','よみがな（名）','別言語での表示名','別言語の名前を表示する言語',
+    'メールアドレス','使用状態','言語','タイムゾーン','電話番号','内線',
+    '携帯電話','URL','従業員ID','入社日','誕生日','コメント','表示優先度','Skype名','削除'];
+  const rows=[hdr];
+  employees.forEach(emp=>{
+    const np=emp.name?emp.name.split(/[\s　]+/):['',''];
+    rows.push([
+      emp.email||'', // ログイン名（メールアドレスと同じ）
+      emp.name||'',   // 表示名
+      '',             // 新ログイン名
+      '',             // パスワード
+      np[0]||'',      // 姓
+      np[1]||'',      // 名
+      emp.yomiSei||'',// よみがな（姓）
+      emp.yomiMei||'',// よみがな（名）
+      '','',          // 別言語
+      emp.email||'',  // メールアドレス
+      '使用する',      // 使用状態
+      'ja',           // 言語
+      'Asia/Tokyo',   // タイムゾーン
+      '','','','',    // 電話番号,内線,携帯,URL
+      emp.empNo||'',  // 従業員ID
+      '2026/04/01',   // 入社日
+      '','','','',''  // 誕生日,コメント,優先度,Skype,削除
+    ]);
+  });
+  return rows;
+}
+
+function toCsvStr(rows){
+  return rows.map(r=>r.map(c=>{
+    const s=String(c);
+    return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\r\n');
+}
+
+function downloadCsv(){
+  const csv=toCsvStr(buildCsvRows());
+  // サイボウズはShift-JIS(CP932)でインポートするため変換
+  const sjisArray=Encoding.convert(Encoding.stringToCode(csv),{to:'SJIS',from:'UNICODE'});
+  const blob=new Blob([new Uint8Array(sjisArray)],{type:'text/csv;charset=shift_jis;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  const d=new Date();
+  a.download=`cybozu_users_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.click();URL.revokeObjectURL(url);
+}
+
+function renderCsvTab(){
+  const area=document.getElementById('csvArea');
+  if(!employees.length){area.innerHTML='<div class="empty-state"><p>社員データがありません</p></div>';return;}
+  const rows=buildCsvRows();
+  const preview=toCsvStr(rows);
+  const COLS=['ログイン名','表示名','姓','名','よみがな（姓）','よみがな（名）','メールアドレス','使用状態','従業員ID','入社日'];
+  const IDXS=[0,1,4,5,6,7,10,11,18,19];
+  const thead=COLS.map(h=>`<th style="padding:8px 10px;border:1px solid var(--border);font-size:12px;background:var(--surface2);white-space:nowrap;">${h}</th>`).join('');
+  const tbody=rows.slice(1).map(r=>`<tr>${IDXS.map(i=>`<td style="padding:8px 10px;border:1px solid var(--border);font-size:12px;">${r[i]||'<span style="color:#bbb">—</span>'}</td>`).join('')}</tr>`).join('');
+  area.innerHTML=`
+    <div class="card">
+      <div class="card-header">📥 サイボウズ一括登録CSV（${employees.length}名）
+        <button class="btn btn-green" onclick="downloadCsv()">⬇️ CSVダウンロード</button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-success" style="margin-bottom:12px;">
+          ✅ テンプレートの列順（25列）に合わせて出力します。<br>
+          ⚠️ 携帯電話番号など空欄の項目は、ダウンロード後に追記してください。
+        </div>
+        <div style="overflow-x:auto;margin-bottom:16px;">
+          <table style="border-collapse:collapse;min-width:100%;"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">CSVプレビュー（全25列）</div>
+        <div class="csv-preview">${preview}</div>
+      </div>
+    </div>`;
+}
+
+function renderProgress(){
+  const area=document.getElementById('progressArea');
+  if(!employees.length){area.innerHTML='<div class="empty-state"><p>社員データがありません</p></div>';return;}
+  const rows=employees.map(emp=>{
+    const tasks=getTasks(emp);
+    const done=tasks.filter(t=>checks[emp.id]?.[t.key]).length;
+    const pct=Math.round(done/tasks.length*100);
+    const col=pct===100?'#2d7a4f':pct>50?'#2d5a8e':'#c0392b';
+    return`<tr>
+      <td style="padding:10px 12px;font-weight:600;border-bottom:1px solid var(--border);">${emp.name}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid var(--border);">${emp.office||'—'}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid var(--border);">${emp.type}</td>
+      <td style="padding:10px 12px;min-width:160px;border-bottom:1px solid var(--border);">
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${col};"></div></div>
+        <div class="progress-text">${done}/${tasks.length} (${pct}%)</div>
+      </td>
+      <td style="padding:10px 12px;border-bottom:1px solid var(--border);">
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 12px;" onclick="selectEmployee('${emp.id}')">詳細 →</button>
+      </td></tr>`;
+  }).join('');
+  area.innerHTML=`<div class="card"><div class="card-header">📊 全体進捗</div>
+    <div class="card-body" style="padding:0;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:var(--surface2);">
+          <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;">氏名</th>
+          <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;">勤務先</th>
+          <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;">区分</th>
+          <th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;">進捗</th>
+          <th style="padding:10px 12px;border-bottom:1px solid var(--border);"></th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table>
+    </div></div>`;
+}
+
+function switchTab(name){
+  const names=['list','detail','mail','csv','progress'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.section-toggle').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    if(!btn)return;
+    const o=btn.textContent;btn.textContent='✓ コピー済み';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied');},2000);
+  });
+}
+</script>
+<script>
+// ページ読み込み時：GASから読み込み（失敗時はローカルにフォールバック）
+window.addEventListener('DOMContentLoaded', async function() {
+  setSyncStatus('読み込み中...', '#ffd');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'loadAll' })
+    });
+    const data = await res.json();
+    if (data.status === 'ok' && data.employees && data.employees.length > 0) {
+      employees = data.employees;
+      checks = data.checks || {};
+      selectedEmpId = employees[0]?.id || null;
+      renderAll();
+      if (selectedEmpId) { renderDetail(selectedEmpId); renderMailDraft(selectedEmpId); }
+      setSyncStatus('✅ ' + employees.length + '名のデータを読み込みました', '#afffaf');
+      setTimeout(() => setSyncStatus(''), 4000);
+      return;
+    }
+  } catch(e) {}
+  // GAS失敗時はローカルにフォールバック
+  if (loadFromStorage()) {
+    renderAll();
+    if (selectedEmpId) { renderDetail(selectedEmpId); renderMailDraft(selectedEmpId); }
+    setSyncStatus('（ローカルデータを使用）', '#ffd');
+  } else {
+    setSyncStatus('');
+  }
+});
+</script>
+</body>
+</html>
