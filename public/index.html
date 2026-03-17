@@ -739,10 +739,10 @@ function addTask(title, dueDate = null, priority = 'mid', tags = [], memo = '') 
   tasks.push(t); renderTasks(); return t;
 }
 function toggleTask(id) {
-  const t = tasks.find(t => t.id === id);
+  const t = tasks.find(t => String(t.id) === String(id));
   if (t) { t.done = !t.done; renderTasks(); }
 }
-function deleteTask(id) { tasks = tasks.filter(t => t.id !== id); renderTasks(); }
+function deleteTask(id) { tasks = tasks.filter(t => String(t.id) !== String(id)); renderTasks(); }
 function getTasksForAI() {
   return tasks.map(({ id, title, dueDate, priority, tags, done }) => ({ id, title, dueDate, priority, tags, done }));
 }
@@ -774,8 +774,8 @@ function renderTasks() {
       else { const d = new Date(t.dueDate); dueLabel = `${d.getMonth()+1}/${d.getDate()}`; }
     }
     return `
-      <div class="task-item ${t.done ? 'done' : ''}" onclick="openModal(${t.id})">
-        <div class="task-check" onclick="event.stopPropagation();toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+      <div class="task-item ${t.done ? 'done' : ''}" onclick="openModal('${t.id}')">
+        <div class="task-check" onclick="event.stopPropagation();toggleTask('${t.id}')">${t.done ? '✓' : ''}</div>
         <div class="task-body">
           <div class="task-title">${escapeHtml(t.title)}</div>
           <div class="task-meta">
@@ -877,10 +877,10 @@ async function sendMessage() {
         summary.push(`「${t.title}」を追加`);
         if (a.dueDate) showToast('📌 タスク追加', `「${t.title}」`, 2500);
       } else if (a.type === 'complete') {
-        const t = tasks.find(t => t.id === a.id);
+        const t = tasks.find(t => String(t.id) === String(a.id));
         if (t) { t.done = true; summary.push(`「${t.title}」を完了`); renderTasks(); }
       } else if (a.type === 'delete') {
-        const t = tasks.find(t => t.id === a.id);
+        const t = tasks.find(t => String(t.id) === String(a.id));
         if (t) summary.push(`「${t.title}」を削除`);
         deleteTask(a.id);
       } else if (a.type === 'completeAll') {
@@ -915,7 +915,7 @@ let editingTaskId = null;
 let currentPriority = 'mid';
 
 function openModal(id) {
-  const t = tasks.find(t => t.id === id);
+  const t = tasks.find(t => String(t.id) === String(id));
   if (!t) return;
   editingTaskId = id;
   document.getElementById('modal-title').value = t.title || '';
@@ -949,7 +949,7 @@ function selectPriority(p) {
 
 function saveModal() {
   if (!editingTaskId) return;
-  const t = tasks.find(t => t.id === editingTaskId);
+  const t = tasks.find(t => String(t.id) === String(editingTaskId));
   if (!t) return;
   const title = document.getElementById('modal-title').value.trim();
   if (!title) { document.getElementById('modal-title').focus(); return; }
@@ -965,7 +965,7 @@ function saveModal() {
 
 function deleteFromModal() {
   if (!editingTaskId) return;
-  const t = tasks.find(t => t.id === editingTaskId);
+  const t = tasks.find(t => String(t.id) === String(editingTaskId));
   if (!confirm(`「${t?.title}」を削除しますか？`)) return;
   deleteTask(editingTaskId);
   saveToGAS();
