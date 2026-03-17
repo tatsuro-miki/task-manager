@@ -1003,37 +1003,35 @@ window.addEventListener('DOMContentLoaded', async () => {
 </script>
 
 <!-- タスク編集モーダル -->
-<div class="modal-overlay" id="task-modal" onclick="closeModalOnOverlay(event)">
+<div class="modal-overlay" id="task-modal" style="display:none;" onclick="closeModalOnOverlay(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title" id="modal-title">タスクを編集</span>
+      <span class="modal-title">✏️ タスクを編集</span>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="modal-field">
-        <label>タスク名</label>
-        <input type="text" id="modal-task-title" placeholder="タスク名を入力">
-      </div>
-      <div class="modal-field">
-        <label>期日</label>
-        <input type="date" id="modal-due-date">
-      </div>
-      <div class="modal-field">
-        <label>優先度</label>
-        <div class="priority-btns">
-          <button class="priority-btn" id="pb-high" onclick="selectPriority('high')">🔴 高</button>
-          <button class="priority-btn" id="pb-mid"  onclick="selectPriority('mid')">🟡 中</button>
-          <button class="priority-btn" id="pb-low"  onclick="selectPriority('low')">⚪ 低</button>
-        </div>
-      </div>
-      <div class="modal-field">
-        <label>詳細メモ</label>
-        <textarea id="modal-memo" placeholder="詳細・メモを入力（任意）"></textarea>
+    <div class="modal-field">
+      <label>タスク名</label>
+      <input type="text" id="modal-title" placeholder="タスク名を入力">
+    </div>
+    <div class="modal-field">
+      <label>期日</label>
+      <input type="date" id="modal-due">
+    </div>
+    <div class="modal-field">
+      <label>優先度</label>
+      <div class="priority-btns">
+        <button class="priority-btn" id="p-high" onclick="selectPriority('high')">🔴 高</button>
+        <button class="priority-btn" id="p-mid"  onclick="selectPriority('mid')">🟡 中</button>
+        <button class="priority-btn" id="p-low"  onclick="selectPriority('low')">⚪ 低</button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-save" onclick="saveModal()">💾 保存</button>
-      <button class="btn-delete" onclick="deleteFromModal()">🗑️ 削除</button>
+    <div class="modal-field">
+      <label>詳細メモ</label>
+      <textarea id="modal-memo" placeholder="詳細・補足メモを入力（任意）"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-delete" onclick="deleteFromModal()">🗑️ 削除</button>
+      <button class="modal-btn modal-btn-save" onclick="saveModal()">保存</button>
     </div>
   </div>
 </div>
