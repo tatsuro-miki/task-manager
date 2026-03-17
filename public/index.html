@@ -119,60 +119,51 @@
 
   /* スマホ用パネル切り替え */
   @media (max-width: 700px) {
-    /* ボトムタブ不要 */
     .bottom-tabs { display: none !important; }
-
-    /* メイン全体をスクロール可能に */
     body { height: auto; overflow: auto; }
     .main { overflow: visible; height: auto; flex: none; }
+    .panel-wrap { flex-direction: column; height: auto; }
 
-    /* 縦並びレイアウト */
-    .panel-wrap {
-      flex-direction: column;
-      height: auto;
-    }
-
-    /* チャットパネルを上に（order利用） */
     .chat-panel {
-      order: 1;
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-      height: 70vh; /* チャットは画面の70% */
-      min-height: 400px;
-      display: flex;
-      flex-direction: column;
+      order: 1; width: 100%;
+      border-right: none; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden; transition: all 0.25s ease;
     }
+    .chat-panel .chat-messages { min-height: 260px; }
+    .chat-panel.collapsed .chat-messages,
+    .chat-panel.collapsed .hint-chips,
+    .chat-panel.collapsed .input-area { display: none !important; }
 
-    /* タスクパネルを下に */
     .task-panel {
-      order: 2;
-      width: 100%;
-      border-right: none;
-      height: auto;
-      min-height: 300px;
-      max-height: 60vh;
-      display: flex;
-      flex-direction: column;
+      order: 2; width: 100%;
+      border-right: none; display: flex; flex-direction: column;
+      transition: all 0.25s ease;
     }
+    .task-panel.collapsed .task-list,
+    .task-panel.collapsed .reminder-panel { display: none !important; }
+    .task-panel.collapsed .filter-tabs { display: none !important; }
 
-    /* hiddenクラスは無効化（縦並びでは常時表示） */
-    .task-panel.hidden,
-    .chat-panel.hidden {
-      opacity: 1 !important;
-      pointer-events: all !important;
-      transform: none !important;
+    .task-panel.hidden, .chat-panel.hidden {
+      opacity: 1 !important; pointer-events: all !important; transform: none !important;
     }
 
     .filter-tab { padding: 8px 12px; font-size: 12px; }
     .input-area { padding: 8px 12px 10px; }
     .task-check { width: 24px; height: 24px; }
     .task-item { padding: 12px; }
-
-    /* リマインダーはコンパクトに */
     .reminder-panel { padding: 8px 12px; }
-    .reminder-panel-title { margin-bottom: 4px; }
   }
+
+  /* 折りたたみヘッダー共通 */
+  .collapsible-header {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .collapsible-header .collapse-arrow {
+    font-size: 10px; color: var(--text3); transition: transform 0.2s; margin-left: 6px;
+  }
+  .collapsed .collapse-arrow { transform: rotate(-90deg); }
 
   /* タスクパネル内 */
   .panel-header {
@@ -479,9 +470,12 @@
   <div class="panel-wrap">
     <!-- タスクパネル -->
     <div class="task-panel" id="task-panel">
-      <div class="panel-header">
+      <div class="panel-header collapsible-header" onclick="togglePanel('task')">
         <span class="panel-title">タスク一覧</span>
-        <span class="task-count" id="task-count">0件</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="task-count" id="task-count">0件</span>
+          <span class="collapse-arrow">▼</span>
+        </div>
       </div>
       <div class="filter-tabs">
         <button class="filter-tab active" onclick="filterTasks('all',this)">すべて</button>
@@ -493,21 +487,30 @@
         <div class="empty-state">タスクはまだありません<br>チャットタブで話しかけてください 💬</div>
       </div>
       <div class="reminder-panel">
-        <div class="reminder-panel-title">🔔 リマインダー</div>
-        <div class="reminder-options">
-          <div class="reminder-option"><input type="checkbox" id="r-today" checked><label for="r-today">期日当日の朝</label></div>
-          <div class="reminder-option"><input type="checkbox" id="r-before" checked><label for="r-before">1日前</label></div>
-          <div class="reminder-option"><input type="checkbox" id="r-overdue" checked><label for="r-overdue">期限切れ時</label></div>
+        <div class="reminder-panel-title collapsible-header" onclick="toggleReminder()" style="margin-bottom:0;">
+          <span>🔔 リマインダー</span>
+          <span id="reminder-arrow" class="collapse-arrow" style="transform:rotate(-90deg);">▼</span>
         </div>
-        <div class="reminder-time-row">
-          <span>通知時刻：</span>
-          <input type="time" id="r-time" value="09:00">
+        <div id="reminder-body" style="display:none;">
+          <div class="reminder-options" style="margin-top:6px;">
+            <div class="reminder-option"><input type="checkbox" id="r-today" checked><label for="r-today">期日当日の朝</label></div>
+            <div class="reminder-option"><input type="checkbox" id="r-before" checked><label for="r-before">1日前</label></div>
+            <div class="reminder-option"><input type="checkbox" id="r-overdue" checked><label for="r-overdue">期限切れ時</label></div>
+          </div>
+          <div class="reminder-time-row">
+            <span>通知時刻：</span>
+            <input type="time" id="r-time" value="09:00">
+          </div>
         </div>
       </div>
     </div>
 
     <!-- チャットパネル -->
     <div class="chat-panel" id="chat-panel">
+      <div class="panel-header collapsible-header" id="chat-header" onclick="togglePanel('chat')" style="display:none;flex-shrink:0;">
+        <span class="panel-title">チャット</span>
+        <span class="collapse-arrow">▼</span>
+      </div>
       <div class="chat-messages" id="chat-messages">
         <div class="welcome-hint">
           <span class="icon">✨</span>
@@ -907,6 +910,38 @@ async function sendMessage() {
   document.getElementById('send-btn').disabled = false;
 }
 
+
+
+// ============================================================
+// 折りたたみ
+// ============================================================
+function togglePanel(panel) {
+  // スマホのみ動作
+  if (window.innerWidth > 700) return;
+  if (panel === 'task') {
+    const el = document.getElementById('task-panel');
+    el.classList.toggle('collapsed');
+  } else if (panel === 'chat') {
+    const el = document.getElementById('chat-panel');
+    el.classList.toggle('collapsed');
+  }
+}
+
+function toggleReminder() {
+  const body = document.getElementById('reminder-body');
+  const arrow = document.getElementById('reminder-arrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
+// スマホのときチャットヘッダーを表示
+function updateChatHeader() {
+  const header = document.getElementById('chat-header');
+  if (header) header.style.display = window.innerWidth <= 700 ? 'flex' : 'none';
+}
+window.addEventListener('resize', updateChatHeader);
+updateChatHeader();
 
 // ============================================================
 // タスク編集モーダル
