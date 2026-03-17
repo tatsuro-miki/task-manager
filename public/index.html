@@ -453,6 +453,7 @@ initLayout();
 // GAS連携
 // ============================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGuE3s1jfyOwy7ZRIO_JlrTYAHXcHarv4p0tFVXoALRnYd2J7hFocdW21POWyo0F_y0A/exec';
+let gasLoaded = false; // GAS読み込み完了フラグ
 
 function setSyncStatus(msg, color = 'var(--text3)') {
   const el = document.getElementById('sync-status');
@@ -460,6 +461,7 @@ function setSyncStatus(msg, color = 'var(--text3)') {
 }
 
 async function saveToGAS() {
+  if (!gasLoaded) { showToast('⏳ 読み込み中です。少し待ってから保存してください', '', 3000); return; }
   if (!tasks.length) { showToast('💾 保存するタスクがありません', '', 2000); return; }
   setSyncStatus('保存中...', 'var(--orange)');
   try {
@@ -493,11 +495,14 @@ async function loadFromGAS() {
       renderTasks();
       setSyncStatus(`✅ ${tasks.length}件`, 'var(--green)');
       setTimeout(() => setSyncStatus(''), 3000);
+      gasLoaded = true;
       return true;
     }
+    gasLoaded = true; // データなしでも読み込み完了
     setSyncStatus('', '');
     return false;
   } catch(e) {
+    gasLoaded = true; // エラーでも操作できるようにフラグON
     setSyncStatus('', '');
     return false;
   }
