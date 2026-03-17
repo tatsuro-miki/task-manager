@@ -324,6 +324,140 @@
 
   .welcome-hint { text-align: center; padding: 30px 16px; color: var(--text3); font-size: 13px; line-height: 1.8; }
   .welcome-hint .icon { font-size: 28px; margin-bottom: 10px; display: block; }
+
+  /* タスク編集モーダル */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; animation: fadeIn 0.15s ease;
+  }
+  .modal-overlay.hide { animation: fadeOut 0.15s ease forwards; }
+  @keyframes fadeOut { to { opacity: 0; } }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    width: 100%; max-width: 440px; padding: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5); animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .modal-close {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 18px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--surface2); }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text2);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .modal-field input[type="text"],
+  .modal-field input[type="date"],
+  .modal-field textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s;
+  }
+  .modal-field input:focus, .modal-field textarea:focus { border-color: var(--accent); }
+  .modal-field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .modal-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+  .priority-btns { display: flex; gap: 6px; }
+  .priority-btn {
+    flex: 1; padding: 7px 4px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); font-size: 12px; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .priority-btn.active-high { background: rgba(242,95,92,0.15); border-color: var(--red); color: var(--red); }
+  .priority-btn.active-mid { background: rgba(245,166,35,0.15); border-color: var(--orange); color: var(--orange); }
+  .priority-btn.active-low { background: rgba(90,100,128,0.2); border-color: var(--text3); color: var(--text2); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-btn {
+    flex: 1; padding: 10px; border-radius: 9px; border: none;
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn-save { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+  .modal-btn-delete { background: rgba(242,95,92,0.15); color: var(--red); border: 1px solid rgba(242,95,92,0.3); flex: 0 0 auto; padding: 10px 16px; }
+  .task-memo { font-size: 11px; color: var(--text3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* タスク編集モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.15s ease; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-header {
+    padding: 16px 18px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .modal-close {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+  .modal-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-field label {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text2);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .modal-field input[type="text"],
+  .modal-field input[type="date"],
+  .modal-field textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s;
+  }
+  .modal-field input:focus, .modal-field textarea:focus { border-color: var(--accent); }
+  .modal-field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .modal-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); }
+  .priority-btns { display: flex; gap: 6px; }
+  .priority-btn {
+    flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); font-family: inherit;
+    font-size: 12px; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .priority-btn.active-high { background: rgba(242,95,92,0.15); border-color: var(--red); color: var(--red); }
+  .priority-btn.active-mid { background: rgba(245,166,35,0.15); border-color: var(--orange); color: var(--orange); }
+  .priority-btn.active-low { background: rgba(90,100,128,0.2); border-color: var(--text3); color: var(--text2); }
+  .modal-footer {
+    padding: 12px 18px 16px;
+    display: flex; gap: 8px; border-top: 1px solid var(--border);
+  }
+  .btn-save {
+    flex: 1; padding: 10px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; color: white; font-family: inherit; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-delete {
+    padding: 10px 16px; border-radius: 9px;
+    background: rgba(242,95,92,0.12); border: 1px solid rgba(242,95,92,0.3);
+    color: var(--red); font-family: inherit; font-size: 13px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-delete:hover { background: rgba(242,95,92,0.2); }
+  /* タスクにメモアイコン表示 */
+  .task-memo-icon { font-size: 10px; color: var(--text3); }
 </style>
 </head>
 <body>
@@ -382,9 +516,9 @@
         </div>
       </div>
       <div class="hint-chips">
-        <button class="hint-chip" onclick="sendHint('タスク一覧を見せて')">📋 一覧</button>
-        <button class="hint-chip" onclick="sendHint('今日中にやることを追加したい')">➕ 追加</button>
-        <button class="hint-chip" onclick="sendHint('優先度の高いタスクは？')">🔥 高優先</button>
+        <button class="hint-chip" onclick="sendHint('今日何から手をつければいい？')">🔥 今日の優先順位</button>
+        <button class="hint-chip" onclick="sendHint('タスクを整理・分解したい')">📝 タスク分解</button>
+        <button class="hint-chip" onclick="sendHint('今週の振り返りをして')">📊 振り返り</button>
         <button class="hint-chip" onclick="sendHint('期限切れのタスクは？')">⚠️ 期限切れ</button>
         <button class="hint-chip" onclick="sendHint('全部完了にして')">✅ 全完了</button>
       </div>
@@ -600,8 +734,8 @@ function closeToast(el) {
 // ============================================================
 // タスク操作
 // ============================================================
-function addTask(title, dueDate = null, priority = 'mid', tags = []) {
-  const t = { id: taskIdCounter++, title, dueDate, priority, tags, done: false };
+function addTask(title, dueDate = null, priority = 'mid', tags = [], memo = '') {
+  const t = { id: taskIdCounter++, title, dueDate, priority, tags, done: false, memo };
   tasks.push(t); renderTasks(); return t;
 }
 function toggleTask(id) {
@@ -640,8 +774,8 @@ function renderTasks() {
       else { const d = new Date(t.dueDate); dueLabel = `${d.getMonth()+1}/${d.getDate()}`; }
     }
     return `
-      <div class="task-item ${t.done ? 'done' : ''}">
-        <div class="task-check" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+      <div class="task-item ${t.done ? 'done' : ''}" onclick="openModal(${t.id})">
+        <div class="task-check" onclick="event.stopPropagation();toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
         <div class="task-body">
           <div class="task-title">${escapeHtml(t.title)}</div>
           <div class="task-meta">
@@ -650,6 +784,7 @@ function renderTasks() {
             ${t.tags.map(g => `<span class="task-tag">${escapeHtml(g)}</span>`).join('')}
             ${t.dueDate && !t.done ? `<span class="reminder-icon">🔔</span>` : ''}
           </div>
+          ${t.memo ? `<div class="task-memo">${escapeHtml(t.memo)}</div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -772,10 +907,82 @@ async function sendMessage() {
   document.getElementById('send-btn').disabled = false;
 }
 
+
+// ============================================================
+// タスク編集モーダル
+// ============================================================
+let editingTaskId = null;
+let currentPriority = 'mid';
+
+function openModal(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  editingTaskId = id;
+  document.getElementById('modal-title').value = t.title || '';
+  document.getElementById('modal-due').value = t.dueDate || '';
+  document.getElementById('modal-memo').value = t.memo || '';
+  selectPriority(t.priority || 'mid');
+  const modal = document.getElementById('task-modal');
+  modal.style.display = 'flex';
+  modal.classList.remove('hide');
+  setTimeout(() => document.getElementById('modal-title').focus(), 100);
+}
+
+function closeModal() {
+  const modal = document.getElementById('task-modal');
+  modal.classList.add('hide');
+  setTimeout(() => { modal.style.display = 'none'; modal.classList.remove('hide'); }, 150);
+  editingTaskId = null;
+}
+
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('task-modal')) closeModal();
+}
+
+function selectPriority(p) {
+  currentPriority = p;
+  ['high','mid','low'].forEach(k => {
+    const btn = document.getElementById('p-' + k);
+    btn.className = 'priority-btn' + (k === p ? ' active-' + k : '');
+  });
+}
+
+function saveModal() {
+  if (!editingTaskId) return;
+  const t = tasks.find(t => t.id === editingTaskId);
+  if (!t) return;
+  const title = document.getElementById('modal-title').value.trim();
+  if (!title) { document.getElementById('modal-title').focus(); return; }
+  t.title = title;
+  t.dueDate = document.getElementById('modal-due').value || null;
+  t.priority = currentPriority;
+  t.memo = document.getElementById('modal-memo').value.trim();
+  renderTasks();
+  saveToGAS();
+  closeModal();
+  showToast('✅ タスクを更新しました', '', 2000);
+}
+
+function deleteFromModal() {
+  if (!editingTaskId) return;
+  const t = tasks.find(t => t.id === editingTaskId);
+  if (!confirm(`「${t?.title}」を削除しますか？`)) return;
+  deleteTask(editingTaskId);
+  saveToGAS();
+  closeModal();
+  showToast('🗑️ タスクを削除しました', '', 2000);
+}
+
+// Escキーでモーダルを閉じる
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
 function sendHint(text) {
   document.getElementById('user-input').value = text;
   sendMessage();
 }
+
 
 // ============================================================
 // ユーティリティ
@@ -794,5 +1001,41 @@ window.addEventListener('DOMContentLoaded', async () => {
   setTimeout(checkReminders, 2500);
 });
 </script>
+
+<!-- タスク編集モーダル -->
+<div class="modal-overlay" id="task-modal" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">タスクを編集</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>タスク名</label>
+        <input type="text" id="modal-task-title" placeholder="タスク名を入力">
+      </div>
+      <div class="modal-field">
+        <label>期日</label>
+        <input type="date" id="modal-due-date">
+      </div>
+      <div class="modal-field">
+        <label>優先度</label>
+        <div class="priority-btns">
+          <button class="priority-btn" id="pb-high" onclick="selectPriority('high')">🔴 高</button>
+          <button class="priority-btn" id="pb-mid"  onclick="selectPriority('mid')">🟡 中</button>
+          <button class="priority-btn" id="pb-low"  onclick="selectPriority('low')">⚪ 低</button>
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>詳細メモ</label>
+        <textarea id="modal-memo" placeholder="詳細・メモを入力（任意）"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" onclick="saveModal()">💾 保存</button>
+      <button class="btn-delete" onclick="deleteFromModal()">🗑️ 削除</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
