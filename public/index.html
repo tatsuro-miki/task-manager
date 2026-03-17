@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -700,7 +700,7 @@ function checkReminders() {
     if (document.getElementById('r-before').checked && t.dueDate === tomorrowStr && isReminderTime && !notifiedSet.has(kB)) {
       notifiedSet.add(kB); fireNotification('⏰ 明日が期日です', `「${t.title}」`);
     }
-    if (document.getElementById('r-overdue').checked && t.dueDate < todayStr && !notifiedSet.has(kO)) {
+    if (document.getElementById('r-overdue').checked && t.dueDate < todayStr && t.dueDate !== todayStr && !notifiedSet.has(kO)) {
       notifiedSet.add(kO); fireNotification('🚨 期限切れ', `「${t.title}」`);
     }
   });
@@ -1056,5 +1056,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 </div>
 </body>
 </html>
+
 
 
