@@ -119,24 +119,59 @@
 
   /* スマホ用パネル切り替え */
   @media (max-width: 700px) {
-    .bottom-tabs { display: flex; }
-    .main { overflow: hidden; }
-    .panel-wrap { position: relative; height: 100%; }
-    .task-panel {
-      position: absolute; inset: 0; width: 100%; border: none; height: 100%;
-      transition: opacity 0.2s, transform 0.2s;
+    /* ボトムタブ不要 */
+    .bottom-tabs { display: none !important; }
+
+    /* メイン全体をスクロール可能に */
+    body { height: auto; overflow: auto; }
+    .main { overflow: visible; height: auto; flex: none; }
+
+    /* 縦並びレイアウト */
+    .panel-wrap {
+      flex-direction: column;
+      height: auto;
     }
+
+    /* チャットパネルを上に（order利用） */
     .chat-panel {
-      position: absolute; inset: 0; width: 100%; border: none; height: 100%;
-      display: flex; flex-direction: column;
-      transition: opacity 0.2s, transform 0.2s;
+      order: 1;
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      height: 70vh; /* チャットは画面の70% */
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
     }
-    .task-panel.hidden { opacity: 0; pointer-events: none; transform: translateX(-12px); }
-    .chat-panel.hidden { opacity: 0; pointer-events: none; transform: translateX(12px); }
+
+    /* タスクパネルを下に */
+    .task-panel {
+      order: 2;
+      width: 100%;
+      border-right: none;
+      height: auto;
+      min-height: 300px;
+      max-height: 60vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* hiddenクラスは無効化（縦並びでは常時表示） */
+    .task-panel.hidden,
+    .chat-panel.hidden {
+      opacity: 1 !important;
+      pointer-events: all !important;
+      transform: none !important;
+    }
+
     .filter-tab { padding: 8px 12px; font-size: 12px; }
     .input-area { padding: 8px 12px 10px; }
     .task-check { width: 24px; height: 24px; }
     .task-item { padding: 12px; }
+
+    /* リマインダーはコンパクトに */
+    .reminder-panel { padding: 8px 12px; }
+    .reminder-panel-title { margin-bottom: 4px; }
   }
 
   /* タスクパネル内 */
@@ -298,10 +333,12 @@
 <header>
   <div class="logo">🤖</div>
   <h1>AI タスクマネージャー</h1>
+  <span id="sync-status" style="font-size:10px;color:var(--text3);margin-left:2px;flex-shrink:0;"></span>
   <button class="notif-btn" id="notif-btn" onclick="requestNotification()">
     <span class="notif-dot"></span>
     <span id="notif-label">通知</span>
   </button>
+  <button class="notif-btn" onclick="saveToGAS()" title="スプレッドシートに保存" style="margin-left:2px;">💾 保存</button>
 </header>
 
 <div class="main">
@@ -400,21 +437,71 @@ function switchPanel(panel) {
   }
 }
 
-// PC判定（700px以上はタスクパネルを常時表示）
+// PC/スマホ判定
 function initLayout() {
-  if (window.innerWidth > 700) {
-    // PCは両方表示
-    document.getElementById('task-panel').classList.remove('hidden');
-    document.getElementById('chat-panel').classList.remove('hidden');
-    document.getElementById('tab-tasks').classList.add('active');
-    document.getElementById('tab-chat').classList.add('active');
-  } else {
-    // スマホはチャットを初期表示
-    switchPanel('chat');
-  }
+  const isPC = window.innerWidth > 700;
+  const taskPanel = document.getElementById('task-panel');
+  const chatPanel = document.getElementById('chat-panel');
+  // どちらも常時表示
+  taskPanel.classList.remove('hidden');
+  chatPanel.classList.remove('hidden');
 }
 window.addEventListener('resize', initLayout);
 initLayout();
+
+// ============================================================
+// GAS連携
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxGuE3s1jfyOwy7ZRIO_JlrTYAHXcHarv4p0tFVXoALRnYd2J7hFocdW21POWyo0F_y0A/exec';
+
+function setSyncStatus(msg, color = 'var(--text3)') {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function saveToGAS() {
+  if (!tasks.length) { showToast('💾 保存するタスクがありません', '', 2000); return; }
+  setSyncStatus('保存中...', 'var(--orange)');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveTasks', tasks })
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      setSyncStatus('✅ 保存済み', 'var(--green)');
+      setTimeout(() => setSyncStatus(''), 3000);
+    } else {
+      setSyncStatus('❌ 保存失敗', 'var(--red)');
+    }
+  } catch(e) {
+    setSyncStatus('❌ 通信エラー', 'var(--red)');
+  }
+}
+
+async function loadFromGAS() {
+  setSyncStatus('読込中...', 'var(--orange)');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'loadTasks' })
+    });
+    const data = await res.json();
+    if (data.status === 'ok' && data.tasks && data.tasks.length > 0) {
+      tasks = data.tasks;
+      taskIdCounter = Math.max(...tasks.map(t => Number(t.id) || 0)) + 1;
+      renderTasks();
+      setSyncStatus(`✅ ${tasks.length}件`, 'var(--green)');
+      setTimeout(() => setSyncStatus(''), 3000);
+      return true;
+    }
+    setSyncStatus('', '');
+    return false;
+  } catch(e) {
+    setSyncStatus('', '');
+    return false;
+  }
+}
 
 // ============================================================
 // 状態
@@ -481,7 +568,6 @@ function fireNotification(title, body) {
   showToast(title, body, 7000);
 }
 setInterval(checkReminders, 60000);
-setTimeout(checkReminders, 2000);
 
 // ============================================================
 // トースト
@@ -665,12 +751,12 @@ async function sendMessage() {
     removeTyping();
     addMsg('ai', escapeHtml(result.message || '処理しました'), summary.length ? summary.join('、') : null);
 
-    // タスク追加後はスマホでタスクタブに切り替え
-    if (summary.length > 0 && window.innerWidth <= 700) {
-      setTimeout(() => {
-        switchPanel('tasks');
-        setTimeout(() => switchPanel('chat'), 1500);
-      }, 400);
+    // タスク操作があった場合は自動保存
+    if (summary.length > 0) {
+      saveToGAS();
+      if (window.innerWidth <= 700) {
+        setTimeout(() => showToast('📋 下のタスク一覧に追加しました', '', 2000), 400);
+      }
     }
   } catch (err) {
     removeTyping();
@@ -695,6 +781,12 @@ function escapeHtml(s) {
 }
 document.getElementById('user-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// 起動時にGASからタスクを読み込む
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadFromGAS();
+  setTimeout(checkReminders, 2500);
 });
 </script>
 </body>
