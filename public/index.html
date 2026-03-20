@@ -743,7 +743,7 @@ function addTask(title, dueDate = null, priority = 'mid', tags = [], memo = '') 
 }
 function toggleTask(id) {
   const t = tasks.find(t => String(t.id) === String(id));
-  if (t) { t.done = !t.done; renderTasks(); }
+  if (t) { t.done = !t.done; renderTasks(); saveToGAS(); }
 }
 function deleteTask(id) { tasks = tasks.filter(t => String(t.id) !== String(id)); renderTasks(); }
 function getTasksForAI() {
