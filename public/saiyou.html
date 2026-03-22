@@ -193,7 +193,7 @@ async function saveToGAS() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveAll', employees, checks })
+      body: JSON.stringify({ token: 'miki_gas_2026', action: 'saveAll', employees, checks })
     });
     const data = await res.json();
     if (data.status === 'ok') {
@@ -215,7 +215,7 @@ async function loadFromGAS() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'loadAll' })
+      body: JSON.stringify({ token: 'miki_gas_2026', action: 'loadAll' })
     });
     const data = await res.json();
     if (data.status === 'ok' && data.employees && data.employees.length > 0) {
@@ -872,7 +872,7 @@ window.addEventListener('DOMContentLoaded', async function() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'loadAll' })
+      body: JSON.stringify({ token: 'miki_gas_2026', action: 'loadAll' })
     });
     const data = await res.json();
     if (data.status === 'ok' && data.employees && data.employees.length > 0) {
