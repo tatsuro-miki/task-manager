@@ -604,7 +604,7 @@ async function saveToGAS() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveTasks', tasks })
+      body: JSON.stringify({ token: 'miki_gas_2026', action: 'saveTasks', tasks })
     });
     const data = await res.json();
     if (data.status === 'ok') {
@@ -623,7 +623,7 @@ async function loadFromGAS() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'loadTasks' })
+      body: JSON.stringify({ token: 'miki_gas_2026', action: 'loadTasks' })
     });
     const data = await res.json();
     if (data.status === 'ok' && data.tasks && data.tasks.length > 0) {
